@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
+import { UnauthorizedException } from '@nestjs/common/exceptions/unauthorized.exception';
+import { scrypt as _scrypt } from 'crypto';
+import { promisify } from 'util';
+
+const scrypt = promisify(_scrypt);
 
 @Injectable()
 export class AuthService {
@@ -9,20 +16,44 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(username: string, pass: string): Promise<any> {
-    const user = await this.usersService.findOne(username);
-    if (user && user.password === pass) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...result } = user;
-      return result;
+  async login(loginDto: LoginDto) {
+    const user = await this.usersService.findOne(loginDto.email);
+
+    if (user) {
+      const [salt, storedHash] = user.password.split('..');
+
+      const hash = (await scrypt(loginDto.password, salt, 23)) as Buffer;
+
+      if (storedHash === hash.toString('hex')) {
+        const jwtOptions = { expiresIn: '1h' };
+
+        return {
+          accessToken: this.jwtService.sign(
+            {
+              email: user.email,
+              password: user.password,
+            },
+            jwtOptions,
+          ),
+        };
+      }
     }
-    return null;
+
+    throw new UnauthorizedException('Wrong credentials');
   }
 
-  async login(user: any) {
-    const payload = { username: user.username, sub: user.userId };
+  async register(createUserDto: CreateUserDto) {
+    const user = await this.usersService.create(createUserDto);
+    const jwtOptions = { expiresIn: '1h' };
+
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken: this.jwtService.sign(
+        {
+          email: user.email,
+          password: user.password,
+        },
+        jwtOptions,
+      ),
     };
   }
 }
