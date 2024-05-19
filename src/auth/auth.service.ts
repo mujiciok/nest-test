@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
-import { UnauthorizedException } from '@nestjs/common/exceptions/unauthorized.exception';
 import { scrypt as _scrypt } from 'crypto';
 import { promisify } from 'util';
 
@@ -39,7 +38,7 @@ export class AuthService {
       }
     }
 
-    throw new UnauthorizedException('Wrong credentials');
+    throw new UnprocessableEntityException('Wrong credentials');
   }
 
   async register(createUserDto: CreateUserDto) {
