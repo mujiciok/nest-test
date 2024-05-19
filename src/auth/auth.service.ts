@@ -24,16 +24,11 @@ export class AuthService {
       const hash = (await scrypt(loginDto.password, salt, 23)) as Buffer;
 
       if (storedHash === hash.toString('hex')) {
-        const jwtOptions = { expiresIn: '1h' };
-
         return {
-          accessToken: this.jwtService.sign(
-            {
-              email: user.email,
-              password: user.password,
-            },
-            jwtOptions,
-          ),
+          accessToken: this.jwtService.sign({
+            email: user.email,
+            password: user.password,
+          }),
         };
       }
     }
@@ -43,16 +38,12 @@ export class AuthService {
 
   async register(createUserDto: CreateUserDto) {
     const user = await this.usersService.create(createUserDto);
-    const jwtOptions = { expiresIn: '1h' };
 
     return {
-      accessToken: this.jwtService.sign(
-        {
-          email: user.email,
-          password: user.password,
-        },
-        jwtOptions,
-      ),
+      accessToken: this.jwtService.sign({
+        email: user.email,
+        password: user.password,
+      }),
     };
   }
 }
