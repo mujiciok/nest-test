@@ -1,4 +1,9 @@
-import { Controller, Post, BadRequestException, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from '../decorators/public.decorator';
 import { UsersService } from '../users/users.service';
@@ -24,7 +29,7 @@ export class AuthController {
     const users = await this.usersService.findOne(createUserDto.email);
 
     if (users) {
-      throw new BadRequestException('Email already in use');
+      throw new UnprocessableEntityException('Email already in use');
     }
 
     return this.authService.register(createUserDto);
